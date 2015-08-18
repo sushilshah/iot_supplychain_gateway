@@ -3,7 +3,7 @@ url : localhost:1880
 rfid_api : /rfid
 accelerometer_api : /accelerometer
 post_interval : 5
-log_file : /home/pi/log/supplychain.log
+log_file : /home/pi/logs/supplychain.log
 
 [DEVICE_PARAMS]
 baudRate :  9600

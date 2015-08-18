@@ -40,9 +40,11 @@ def main():
 	auth = {'username': uname, 'password': pwd}
 	client_mqtt_post = CarriotsMqttClient(auth)
 	start_time = time.time()
-	
+	baudRate = cp.getint('DEVICE_PARAMS','baudRate')
+	connectPort = cp.get('DEVICE_PARAMS','connectPort')
+
 	'''Serial Read from RFID Reader and Accelerometer'''
-	ser = serial.Serial('/dev/ttyACM0', 9600)
+	ser = serial.Serial(connectPort, baudRate)
 	while 1:
 		serial_line = ser.readline()
 		if atl_utils.is_json(serial_line):

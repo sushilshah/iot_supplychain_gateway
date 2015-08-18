@@ -9,8 +9,6 @@ import serial, time, json
 import atl_utils
 
 def main():
-	logging.basicConfig(filename='/home/pi/logs/supplychain.log',filemode='w', level=logging.DEBUG)
-	logging.info('Starting Supply Chain program')
 	
 	default_cfg = {
 		'url'        : 'localhost:1880',
@@ -19,10 +17,15 @@ def main():
 		'device_id'  : '56789'
 		}
 
-
-	logging.info('Config read from: ' + os.path.splitext(__file__)[0] + '.ini')
 	cp = ConfigParser.SafeConfigParser(default_cfg)
 	cp.read(os.path.splitext(__file__)[0] + '.ini')
+	log_file = cp.get('PARAMETERS','log_file')
+
+	logging.basicConfig(filename=log_file,filemode='w', level=logging.DEBUG)
+
+	logging.info('Starting Supply Chain program')
+	logging.info('Config read from: ' + os.path.splitext(__file__)[0] + '.ini')
+
 	logging.info('\n==========Started with below configurations========================')
 	logging.info('url       : ' + cp.get('PARAMETERS','url'))
 	logging.info('baudRate : ' + str(cp.getint('DEVICE_PARAMS','baudRate')))
