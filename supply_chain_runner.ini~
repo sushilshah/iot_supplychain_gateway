@@ -1,0 +1,15 @@
+[PARAMETERS]
+url : localhost:1880
+rfid_api : /rfid
+accelerometer_api : /accelerometer
+post_interval : 5
+log_file : /home/pi/log/supplychain.log
+
+[DEVICE_PARAMS]
+baudRate :  9600
+connectPort :  '/dev/ttyACM0'
+device_id : 56789
+
+[CARRIOTS_PARAMS]
+username : e60ed329b656fa6d918f058af650a6de26a38b0697b7cf61ab204730cca3a53a
+password : 
