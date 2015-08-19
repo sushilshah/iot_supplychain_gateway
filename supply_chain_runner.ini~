@@ -7,7 +7,7 @@ log_file : /home/pi/logs/supplychain.log
 
 [DEVICE_PARAMS]
 baudRate :  9600
-connectPort :  '/dev/ttyACM0'
+connectPort :  /dev/ttyACM0
 device_id : 56789
 
 [CARRIOTS_PARAMS]
