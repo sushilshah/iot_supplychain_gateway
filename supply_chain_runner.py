@@ -8,6 +8,8 @@ import logging
 import serial, time, json, datetime
 import atl_utils
 from sfdc_utils import SFDCUtils
+import RPi.GPIO as GPIO
+
 
 def main():
 	
@@ -47,11 +49,23 @@ def main():
 
 	'''Serial Read from RFID Reader and Accelerometer'''
 	ser = serial.Serial(connectPort, baudRate)
-	while 1:
+
+	'''Button setup '''
+	GPIO.setmode(GPIO.BOARD)
+	GPIO.setup(12, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+	button_press_flag = False
+	logging.info("Supply Chain process initiated. Waiting for button press to start polling the data")
+	while True:
+		input_state = GPIO.input(12)
+		if input_state == False:
+			button_press_flag = (False if button_press_flag else True)
+			process_status = (" PROCESS STARTED " if button_press_flag else " PROCESS STOPPED ")
+			logging.info("Button Press detected %s as a result of it" %process_status)
+			print ("BUTTON PRESSED. Current flag is %s" %button_press_flag)
 		serial_line = ser.readline()
 		if atl_utils.is_json(serial_line):
 			serial_json = json.loads(serial_line)
-			if "rfid_tag" not in serial_json:
+			if "rfid_tag" not in serial_json and button_press_flag:
 				logging.debug( 'accelerometer reading: %s' %serial_line)
 				elapsed_time = time.time() - start_time
 				if elapsed_time >= post_interval:
