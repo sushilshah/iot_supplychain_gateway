@@ -13,6 +13,7 @@ import thread, time, threading, collections
 
 class SerialReadThread(threading.Thread):
 	rfid_queue = collections.deque(5*[""], 5)
+	general_serial_queue = collections.deque(5*[""], 5)
 	def __init__(self,connectPort,baudRate):
 		super(SerialReadThread, self).__init__()
 		self.connectPort=connectPort
@@ -23,17 +24,16 @@ class SerialReadThread(threading.Thread):
 		ser = serial.Serial(self.connectPort, self.baudRate)
 		while True:
 			serial_line = ser.readline()
-			print ("Connection port %s" %self.connectPort)
-			print serial_line
-#			time.sleep(3)
-			
-			self.rfid_queue.append(time.time())
-			print  ("baudrate : %s" %self.baudRate)
+			#print  ("baudrate : %s" %self.baudRate)
 			if atl_utils.is_json(serial_line):
 				serial_json = json.loads(serial_line)
 				if "rfid_tag" in serial_json:
 					print "rfid read "
 					print serial_line
+					self.rfid_queue.append(serial_json)
+				else:
+					self.general_serial_queue.append(serial_json)
+
 
 
 
@@ -107,6 +107,7 @@ def main():
  			logging.info("Button Press detected %s as a result of it" %process_status)
  			print ("BUTTON PRESSED. Current flag is %s" %button_press_flag)
 			time.sleep(0.2)
+			print t.rfid_queue
 # 		serial_line = ser.readline()
 # 		if atl_utils.is_json(serial_line):
 # 			serial_json = json.loads(serial_line)
