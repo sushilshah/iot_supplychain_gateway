@@ -12,8 +12,8 @@ import RPi.GPIO as GPIO
 import thread, time, threading, collections
 
 class SerialReadThread(threading.Thread):
-	rfid_queue = collections.deque(5*[""], 5)
-	general_serial_queue = collections.deque(5*[""], 5)
+	rfid_queue = collections.deque(maxlen=5)
+	general_serial_queue = collections.deque(maxlen=5)
 	def __init__(self,connectPort,baudRate):
 		super(SerialReadThread, self).__init__()
 		self.connectPort=connectPort
@@ -27,9 +27,9 @@ class SerialReadThread(threading.Thread):
 			#print  ("baudrate : %s" %self.baudRate)
 			if atl_utils.is_json(serial_line):
 				serial_json = json.loads(serial_line)
+				print "serial line %s" %serial_line
 				if "rfid_tag" in serial_json:
-					print "rfid read "
-					print serial_line
+					logging.info("RFID reading received : %s" %serial_line)
 					self.rfid_queue.append(serial_json)
 				else:
 					self.general_serial_queue.append(serial_json)
@@ -39,17 +39,14 @@ class SerialReadThread(threading.Thread):
 
 def post_to_carriots(carriotsMqttClientObject, payload):
 	client_mqtt_post = carriotsMqttClientObject 
-	#client_mqtt_post.post_to_carriots(payload)
-	print "sleep carriots"
-	time.sleep(5)
+	client_mqtt_post.post_to_carriots(payload)
 
 def post_to_salesforce(payload):
 	x = SFDCUtils()
-	print "sleep salesforce"
-	time.sleep(5)
-	logging.debug("payload : %s" %payload)
-	#resp = x.post(payload)
-	#logging.info("Post response : %s" %resp)
+	logging.debug("payload for SFDC : %s" %payload)
+	resp = x.post(payload)
+	logging.info("Post response to SFDC : %s" %resp)
+	return resp
 
 def main():
 	
@@ -64,7 +61,7 @@ def main():
 	cp.read(os.path.splitext(__file__)[0] + '.ini')
 	log_file = cp.get('PARAMETERS','log_file')
 
-	logging.basicConfig(filename=log_file,filemode='w', level=logging.INFO)
+	logging.basicConfig(filename=log_file,filemode='w', level=logging.DEBUG)
 
 	logging.info('Starting Supply Chain program')
 	logging.info('Config read from: ' + os.path.splitext(__file__)[0] + '.ini')
@@ -108,6 +105,35 @@ def main():
  			print ("BUTTON PRESSED. Current flag is %s" %button_press_flag)
 			time.sleep(0.2)
 			print t.rfid_queue
+		
+		if len(t.rfid_queue) > 0:
+			while len(t.rfid_queue) > 0:
+				print "RFID READ IS "
+				rfid_reading =  t.rfid_queue.pop()
+				logging.debug( 'RFID readings: %s' %rfid_reading)
+				rfid_tag_id = rfid_reading["rfid_tag"].lstrip('$')
+				curr_time = str(datetime.datetime.now().isoformat())
+				#x = SFDCUtils()
+				payload = '{"ID__c":"'+rfid_tag_id+'","SensorID__c":"'+device_id+'","Type__c":"beef","Status__c":"Transit","ShippingTime__c":"'+curr_time+'"}'
+				try:
+					thread.start_new_thread( post_to_salesforce, (payload, ) )
+				except Exception, e:
+					logging.error("Error while starting a thread to post data to salesforce : %s" %e)
+					pass
+
+		if button_press_flag and len(t.general_serial_queue) > 0:
+			elapsed_time = time.time() - start_time
+			if elapsed_time >= post_interval:
+				payload = t.general_serial_queue.pop()
+				logging.debug( 'accelerometer reading: %s' %payload)
+				try:
+					#thread.start_new_thread( post_to_carriots, (client_mqtt_post,payload, ) )
+					print ""
+				except Exception, e:
+					logging.error("Error while starting a thread to post data to carriots : %s" %e)
+					pass
+				start_time = time.time()
+
 # 		serial_line = ser.readline()
 # 		if atl_utils.is_json(serial_line):
 # 			serial_json = json.loads(serial_line)
