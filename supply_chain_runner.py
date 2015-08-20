@@ -9,7 +9,24 @@ import serial, time, json, datetime
 import atl_utils
 from sfdc_utils import SFDCUtils
 import RPi.GPIO as GPIO
+import thread, time
 
+
+def post_to_carriots(carriotsMqttClientObject, payload):
+	client_mqtt_post = carriotsMqttClientObject 
+	#client_mqtt_post.post_to_carriots(payload)
+	print "sleep carriots"
+	time.sleep(5)
+	print "work carriots"
+
+def post_to_salesforce(payload):
+	x = SFDCUtils()
+	print "sleep salesforce"
+	time.sleep(5)
+	print 'wake up salesforce'
+	logging.debug("payload : %s" %payload)
+	#resp = x.post(payload)
+	#logging.info("Post response : %s" %resp)
 
 def main():
 	
@@ -69,17 +86,27 @@ def main():
 				logging.debug( 'accelerometer reading: %s' %serial_line)
 				elapsed_time = time.time() - start_time
 				if elapsed_time >= post_interval:
-					client_mqtt_post.post_to_carriots(serial_json)
+					#client_mqtt_post.post_to_carriots(serial_json)
+					try:
+						thread.start_new_thread( post_to_carriots, (client_mqtt_post,serial_json, ) )
+					except Exception, e:
+						logging.error("Error while starting a thread to post data to carriots : %s" %e)
+						pass
 					start_time = time.time()
 			else:
 				logging.debug( 'RFID readings: %s' %serial_line)
 				rfid_tag_id = serial_json["rfid_tag"].lstrip('$')
 				curr_time = str(datetime.datetime.now().isoformat())
-				x = SFDCUtils()
+				#x = SFDCUtils()
 				payload = '{"ID__c":"'+rfid_tag_id+'","SensorID__c":"'+device_id+'","Type__c":"beef","Status__c":"Transit","ShippingTime__c":"'+curr_time+'"}'
-				logging.debug("payload : %s" %payload)
-				resp = x.post(payload)
-				logging.info("Post response : %s" %resp)
+				#logging.debug("payload : %s" %payload)
+				#resp = x.post(payload)
+				try:
+					thread.start_new_thread( post_to_salesforce, (payload, ) )
+				except Exception, e:
+					logging.error("Error while starting a thread to post data to salesforce : %s" %e)
+					pass
+				
 
 
 main()
