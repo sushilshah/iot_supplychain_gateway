@@ -105,7 +105,11 @@ def main():
  			print ("BUTTON PRESSED. Current flag is %s" %button_press_flag)
 			time.sleep(0.2)
 			print t.rfid_queue
-		
+
+		logging.info("RFID QUEUS STATUS " + str(len(t.rfid_queue)	))
+		logging.info(t.rfid_queue)
+
+
 		if len(t.rfid_queue) > 0:
 			while len(t.rfid_queue) > 0:
 				print "RFID READ IS "
