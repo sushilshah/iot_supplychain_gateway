@@ -59,13 +59,17 @@ def main():
 	baudRate = cp.getint('DEVICE_PARAMS','baudRate')
 	connectPort = cp.get('DEVICE_PARAMS','connectPort')
 	device_id = cp.get('DEVICE_PARAMS','device_id')
-
+	
 	'''Serial Read from RFID Reader and Accelerometer'''
 	ser = serial.Serial(connectPort, baudRate)
 
 	'''Button setup '''
 	GPIO.setmode(GPIO.BOARD)
+	#12 is button ping 
 	GPIO.setup(12, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+	#13 is pin for led light
+	GPIO.setup(13, GPIO.OUT)
+	GPIO.output(13,GPIO.LOW)
 	button_press_flag = False
 	logging.info("Supply Chain process initiated. Waiting for button press to start polling the data")
 	print "File loaded start the process. Happy clicking "
@@ -80,8 +84,12 @@ def main():
  			logging.info("Button Press detected %s as a result of it" %process_status)
  			print ("BUTTON PRESSED. Current flag is %s" %button_press_flag)
 			time.sleep(0.2)
+		#is button is pressed then glow the light
+		if button_press_flag:
+			GPIO.output(13,GPIO.HIGH)
+		else:
+			GPIO.output(13,GPIO.LOW)
 
-		
 		if atl_utils.is_json(serial_line):
  			serial_json = json.loads(serial_line)
  			if "rfid_tag" in serial_json:
